@@ -1,0 +1,64 @@
+---
+title: "Water Stress in Mexico City"
+author: "Mitsue Guerrero"
+date: "10/13/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(janitor)
+library(httr)
+library(pageviews)
+library(jsonlite)
+library(gt)
+library(sf)
+```
+
+# Project Domain: 
+### Water stress in Mexico City
+
+# Description:
+
+<br>I will use 2019 data from the water department in Mexico City (SACMEX) to compare water consumption per neighborhoods (colonias) and which of these are at risk due to high precipitation. </br>
+
+I will use the localization data (geographic coordinates) to join them.
+
+# Source:
+[Datos Abiertos Ciudad de Mexico](https://datos.cdmx.gob.mx/explore/dataset/consumo-agua/information/?location=10,19.35762,-99.14463&dataChart=eyJxdWVyaWVzIjpbeyJjaGFydHMiOlt7InR5cGUiOiJiYXIiLCJmdW5jIjoiQ09VTlQiLCJ5QXhpcyI6ImNvbnN1bW8iLCJzY2llbnRpZmljRGlzcGxheSI6dHJ1ZSwiY29sb3IiOiJyYW5nZS1CbHVlcyJ9XSwieEF4aXMiOiJhbGNhbGRpYSIsIm1heHBvaW50cyI6NTAsInNvcnQiOiIiLCJzZXJpZXNCcmVha2Rvd24iOiJpbmRpY2VfZGVzYXJyb2xsbyIsInN0YWNrZWQiOiJub3JtYWwiLCJjb25maWciOnsiZGF0YXNldCI6ImNvbnN1bW8tYWd1YSIsIm9wdGlvbnMiOnt9fX1dLCJ0aW1lc2NhbGUiOiIiLCJkaXNwbGF5TGVnZW5kIjp0cnVlLCJhbGlnbk1vbnRoIjp0cnVlfQ%3D%3D)
+
+```{r Data Source 1 and 2 from CSV, message = FALSE}
+
+
+data1_csv <- read_delim("raw-data/consumo-agua.csv", ";", locale = readr::locale(encoding = "UTF-8")) %>%
+  clean_names()
+consumo <- data1_csv %>% 
+  select(consumo_total, nomgeo, indice_des) %>%
+  group_by(nomgeo) %>% 
+  summarise(consumo_avg = mean(consumo_total)) %>%
+  arrange(desc(consumo_avg))
+
+consumo$nomgeo <- factor(consumo$nomgeo, levels =consumo$nomgeo[order(consumo$consumo_avg)])
+
+ggplot(consumo, aes(x = nomgeo, y = consumo_avg, fill = nomgeo, alpha = 0.5)) +
+  theme_minimal() +
+  geom_col() +
+  coord_flip() +
+  theme(legend.position = "none", panel.grid.major.y =  element_blank()) +
+  ggtitle("Average water consumption by Municipality in Mexico City") +
+  xlab("Municipality") + ylab ("Liters")
+
+
+
+
+
+# gt(data1_csv) %>% tab_header(title = "Water Consumption in CDMX",
+#                     subtitle = "2019 (Sample of 5)") 
+
+# data2_csv <- read_delim("raw-data/atlas-de-riesgo-precipitacion.csv", ";", locale = readr::locale(encoding = "UTF-8")) %>% 
+#   clean_names() %>% 
+# 
+# data2_csv
+#gt(data2_csv) %>% tab_header(title = "Precipitation profile in CDMX",
+                    #subtitle = "2019 (Sample of 5)") 
